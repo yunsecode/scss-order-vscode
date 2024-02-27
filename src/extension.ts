@@ -43,7 +43,7 @@ function reOrderArray(text: any, startCheck: number, endCheck: number) {
 	// console.log(newArr);
 
 	defaultOrder.forEach(orderItem => {
-		const foundIndex = newArr.findIndex(property => property.startsWith(orderItem + ':'));
+		const foundIndex = newArr.findIndex(property => property.trim().startsWith(orderItem + ':'));
 
 		if (foundIndex !== -1) {
 			reorderedProperties.push(newArr[foundIndex]);
@@ -67,25 +67,27 @@ function order(): Thenable<boolean> {
             return reject('No active text editor');
         }
 		editor.edit((editBuilder: vscode.TextEditorEdit) => {
-			// get Text
 			const text = editor.document.getText();
-
-			// split the text
-			const splitRegex = /(?<={)|(?<=;)|(?<=})/;
-			let splitResult = text.split(splitRegex).map(item => item.trim()).filter(item => item);
-
-			// parse
-			let len = splitResult.length;
+			let splitResult = [];
+			const lineCount = editor.document.lineCount;
 			let i = 0;
 
-			while (i < len) {
+			while (i < lineCount) {
+				splitResult.push(editor.document.lineAt(i).text)
+				i++;
+			}
+
+			// parse
+			i = 0;
+
+			while (i < lineCount) {
 				let next = i + 1;
 				let startCheck = 0;
 				let endCheck = 0;
 
 				if (splitResult[i].includes("{")) {
 					startCheck = i;
-					while (next < len) {
+					while (next < lineCount) {
 						if (splitResult[next].includes("{") || splitResult[next].includes("}")) {
 							endCheck = next;
 							i = next - 1;
@@ -101,13 +103,13 @@ function order(): Thenable<boolean> {
 			}
 
 			let newText = splitResult.join('\n');
-			newText = newText + "\n";
+			// newText = newText + "\n";
 
 			editor.edit(editBuilder => {
 				const document = editor.document;
 				const fullRange = new vscode.Range(
 					document.positionAt(0),
-					document.positionAt(text.length)
+					document.positionAt(editor.document.getText().length)
 				);
 
 				editBuilder.replace(fullRange, newText);
