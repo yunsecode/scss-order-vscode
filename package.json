@@ -41,6 +41,12 @@
           "type": "boolean",
           "default": "true",
           "description": "Change on save ?"
+        },
+        "scss-order.showErrorMessages": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show error messages or not",
+          "scope": "resource"
         }
       }
     }
