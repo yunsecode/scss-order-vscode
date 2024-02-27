@@ -1,0 +1,67 @@
+{
+  "name": "scss-order",
+  "publisher": "yunsecode",
+  "displayName": "Scss Order",
+  "description": "This is to order the style in scss file",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yunsecode09/scss-order.git"
+  },
+  "version": "0.0.7",
+  "engines": {
+    "vscode": "^1.52.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onLanguage:scss"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "scss-order.order",
+        "title": "Order Style"
+      }
+    ],
+    "configuration": {
+      "title": "Order Setting",
+      "properties": {
+        "scss-order.orderList": {
+          "type": "array",
+          "default": "",
+          "description": "Order of style elements",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scss-order.changeOnSave": {
+          "type": "boolean",
+          "default": "true",
+          "description": "Change on save ?"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.52.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.6",
+    "@vscode/test-electron": "^2.3.9"
+  }
+}
