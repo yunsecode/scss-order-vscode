@@ -211,8 +211,8 @@ export function activate(context: vscode.ExtensionContext) {
                 console.log('aaa');
 
                 if (
-                    event.document.languageId === 'scss' &&
-                    event.document.languageId === 'sass' &&
+                    (event.document.languageId === 'scss' ||
+                        event.document.languageId === 'sass') &&
                     event.document.isDirty &&
                     changeOnSave
                 ) {
