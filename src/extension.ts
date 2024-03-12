@@ -5,6 +5,10 @@ import * as fs from 'fs';
 const defaultOrder = [
     'position',
     'z-index',
+    'top',
+    'right',
+    'bottom',
+    'left',
     'margin',
     'margin-top',
     'margin-right',
@@ -195,7 +199,7 @@ function getConfig() {
 export function activate(context: vscode.ExtensionContext) {
     getConfig();
 
-    // On save
+    // On save Unsaved Files
     context.subscriptions.push(
         vscode.workspace.onWillSaveTextDocument(
             (event: vscode.TextDocumentWillSaveEvent) => {
@@ -208,6 +212,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                 if (
                     event.document.languageId === 'scss' &&
+                    event.document.languageId === 'sass' &&
                     event.document.isDirty &&
                     changeOnSave
                 ) {
