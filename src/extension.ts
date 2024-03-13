@@ -307,23 +307,24 @@ function validateSCSS(filePath: string): boolean {
 function onSave() {
     return vscode.workspace.onWillSaveTextDocument(
         (event: vscode.TextDocumentWillSaveEvent) => {
-            const isDirty = event.document.isDirty;
+            if (!event.document.isDirty) {
+                return;
+            }
+            // TODO: change with config value not juste true
+            if (
+                event.document.languageId === 'scss' ||
+                event.document.languageId === 'sass'
+            ) {
+                console.log('b2bb');
 
-            getConfig()
-                .then((config) => {
-                    if (
-                        (event.document.languageId === 'scss' ||
-                            event.document.languageId === 'sass') &&
-                        isDirty &&
-                        validateSCSS(event.document.uri.fsPath) &&
-                        config.changeOnSave
-                    ) {
-                        order(config);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error while getting config:', error);
-                });
+                let config: Config = {
+                    orderList: [],
+                    changeOnSave: true,
+                    showErrorMessages: false,
+                };
+                order(config);
+                // event.waitUntil(order(config));
+            }
         },
     );
 }
