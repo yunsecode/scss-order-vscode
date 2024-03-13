@@ -67,7 +67,7 @@ function reOrderArray(text: any, startCheck: number, endCheck: number) {
     }
 }
 
-function order(): Thenable<boolean> {
+function order(config: Config): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -160,7 +160,6 @@ interface Config {
     orderList: string[];
     changeOnSave: boolean;
     showErrorMessages: boolean;
-    // always properties before class
     // 그냥 클래스, :hover 이런 순서
 }
 
@@ -189,8 +188,6 @@ async function getFileJson(fileName: string) {
 }
 
 function getCodeSetting(config: Config) {
-    // const startTimestamp = Date.now();
-    // ---------------------------------------
     const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
 
     const changeOnSave: boolean | undefined =
@@ -208,14 +205,6 @@ function getCodeSetting(config: Config) {
     if (showErrorMessages) {
         config.showErrorMessages = showErrorMessages;
     }
-    // ---------------------------------------
-    // const endTimestamp = Date.now();
-    // const elapsedTime = endTimestamp - startTimestamp;
-    // console.log(`실행 시간: ${elapsedTime}밀리초`);
-
-    // let changeOnSave: boolean = vscode.workspace
-    //     .getConfiguration('scss-order')
-    //     .get('changeOnSave', true);
 }
 
 async function getPackageJsonConfig(config: Config) {
@@ -244,8 +233,6 @@ async function getSassOrderSetting(config: Config, fileName: string) {
     try {
         let fileJson = await getFileJson(fileName);
 
-        console.log('fileJson', fileJson);
-
         if (fileJson.orderList) {
             config.orderList = fileJson.orderList;
         }
@@ -260,14 +247,12 @@ async function getSassOrderSetting(config: Config, fileName: string) {
     }
 }
 
-async function getConfig() {
-    let config = {
+async function getConfig(): Promise<Config> {
+    let config: Config = {
         orderList: [],
         changeOnSave: true,
         showErrorMessages: false,
     };
-
-    console.log('111111');
 
     // settings.json / .vscode/setting.json
     getCodeSetting(config);
@@ -284,47 +269,59 @@ async function getConfig() {
     // scss-orderrc
     await getSassOrderSetting(config, 'scss-orderrc');
 
-    console.log('orderList:', config.orderList);
+    return config;
 }
 
 // ---------------------------------------- Activate ----------------------------------------
-// TODO: do benchmarking wich is faster: open setting files every time or detect setting and set setting value
-export function activate(context: vscode.ExtensionContext) {
-    const config = getConfig();
-
-    // On save Unsaved Files
-    context.subscriptions.push(
-        vscode.workspace.onWillSaveTextDocument(
-            (event: vscode.TextDocumentWillSaveEvent) => {
-                getConfig();
-                // scss-order.json
-                // .scss-order.json
-                // scss-orderrc
-
-                console.log('aaa');
-
-                if (
-                    (event.document.languageId === 'scss' ||
-                        event.document.languageId === 'sass') &&
-                    event.document.isDirty
-                ) {
-                    console.log('b2bb');
-
-                    event.waitUntil(order());
-                }
-            },
-        ),
-    );
-
-    // With Command + Shift + P
-    let disposable = vscode.commands.registerCommand(
-        'scss-order.order',
-        function () {
-            order();
+// On Cmd + s
+function onSave() {
+    return vscode.workspace.onWillSaveTextDocument(
+        (event: vscode.TextDocumentWillSaveEvent) => {
+            getConfig()
+                .then((config) => {
+                    if (
+                        (event.document.languageId === 'scss' ||
+                            event.document.languageId === 'sass') &&
+                        event.document.isDirty &&
+                        config.changeOnSave
+                    ) {
+                        event.waitUntil(order(config));
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error while getting config:', error);
+                });
         },
     );
+}
 
-    context.subscriptions.push(disposable);
+// With Command + Shift + P
+function onCommand() {
+    return vscode.commands.registerCommand(
+        'scss-order.order',
+        async function () {
+            console.log('order style');
+
+            const config = await getConfig();
+
+            order(config);
+        },
+    );
+}
+
+export function activate(context: vscode.ExtensionContext) {
+    // const startTimestamp = Date.now();
+    // // ---------------------------------------
+    // // ---------------------------------------
+    // const endTimestamp = Date.now();
+    // const elapsedTime = endTimestamp - startTimestamp;
+    // console.log(`실행 시간: ${elapsedTime}밀리초`);
+
+    // Cmd + s
+    context.subscriptions.push(onSave());
+
+    // Cmd + Shipt + P -> order style
+    context.subscriptions.push(onCommand());
 }
 
 // ---------------------------------------- deactivate ----------------------------------------
