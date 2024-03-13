@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as sass from 'sass';
 
 // ---------------------------------------- Order ----------------------------------------
 const defaultOrder = [
@@ -188,26 +189,32 @@ async function getFileJson(fileName: string) {
 }
 
 function getCodeSetting(config: Config) {
+    console.log('checkpoint 1');
+
     const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
 
     const changeOnSave: boolean | undefined =
-        scssOrderConfig.get('changeOnSave');
-    const orderList: string[] | undefined = scssOrderConfig.get('orderList');
+        scssOrderConfig.get<boolean>('changeOnSave');
+    const orderList: string[] | undefined =
+        scssOrderConfig.get<string[]>('orderList');
     const showErrorMessages: boolean | undefined =
-        scssOrderConfig.get('showErrorMessages');
+        scssOrderConfig.get<boolean>('showErrorMessages');
 
-    if (changeOnSave) {
+    if (changeOnSave !== undefined) {
         config.changeOnSave = changeOnSave;
     }
-    if (orderList) {
+    if (orderList !== undefined) {
         config.orderList = orderList;
     }
-    if (showErrorMessages) {
+    if (showErrorMessages !== undefined) {
         config.showErrorMessages = showErrorMessages;
     }
+    console.log('checkpoint 2');
 }
 
 async function getPackageJsonConfig(config: Config) {
+    console.log('checkpoint 3');
+
     try {
         let fileJson = await getFileJson('package.json');
 
@@ -227,9 +234,12 @@ async function getPackageJsonConfig(config: Config) {
     } catch (error) {
         console.error('Error:', error);
     }
+    console.log('checkpoint 4');
 }
 
 async function getSassOrderSetting(config: Config, fileName: string) {
+    console.log('getSassOrderSetting', fileName, '1');
+
     try {
         let fileJson = await getFileJson(fileName);
 
@@ -245,6 +255,7 @@ async function getSassOrderSetting(config: Config, fileName: string) {
     } catch (error) {
         console.error('Error:', error);
     }
+    console.log('getSassOrderSetting', fileName, '2');
 }
 
 async function getConfig(): Promise<Config> {
@@ -253,6 +264,8 @@ async function getConfig(): Promise<Config> {
         changeOnSave: true,
         showErrorMessages: false,
     };
+
+    console.log('checkpoint 0');
 
     // settings.json / .vscode/setting.json
     getCodeSetting(config);
@@ -269,23 +282,43 @@ async function getConfig(): Promise<Config> {
     // scss-orderrc
     await getSassOrderSetting(config, 'scss-orderrc');
 
+    console.log('checkpoint 5');
     return config;
 }
 
+// ---------------------------------------- Sass ----------------------------------------
+function validateSCSS(filePath: string): boolean {
+    try {
+        const result = sass.renderSync({
+            file: filePath,
+        });
+        // console.log(result);
+        console.log('is Valid');
+
+        return true; // 유효한 SCSS 파일인 경우 true를 반환
+    } catch (error) {
+        // console.error('Error validating SCSS:', error);
+        console.log('is Not Valid');
+        return false; // 유효하지 않은 SCSS 파일인 경우 false를 반환
+    }
+}
 // ---------------------------------------- Activate ----------------------------------------
 // On Cmd + s
 function onSave() {
     return vscode.workspace.onWillSaveTextDocument(
         (event: vscode.TextDocumentWillSaveEvent) => {
+            const isDirty = event.document.isDirty;
+
             getConfig()
                 .then((config) => {
                     if (
                         (event.document.languageId === 'scss' ||
                             event.document.languageId === 'sass') &&
-                        event.document.isDirty &&
+                        isDirty &&
+                        validateSCSS(event.document.uri.fsPath) &&
                         config.changeOnSave
                     ) {
-                        event.waitUntil(order(config));
+                        order(config);
                     }
                 })
                 .catch((error) => {
