@@ -164,57 +164,149 @@ interface Config {
     // 그냥 클래스, :hover 이런 순서
 }
 
-function getConfig() {
+async function getFileJson(fileName: string) {
+    try {
+        // 파일 검색 비동기 작업 수행
+        const files = await vscode.workspace.findFiles(
+            `**/${fileName}`,
+            '**/node_modules/**',
+            1,
+        );
+
+        if (files.length < 1) {
+            return;
+        }
+
+        const packageJsonConfigPath = files[0].fsPath;
+
+        // 파일 읽기 비동기 작업 수행
+        const data = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
+
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function getCodeSetting(config: Config) {
+    // const startTimestamp = Date.now();
+    // ---------------------------------------
+    const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
+
+    const changeOnSave: boolean | undefined =
+        scssOrderConfig.get('changeOnSave');
+    const orderList: string[] | undefined = scssOrderConfig.get('orderList');
+    const showErrorMessages: boolean | undefined =
+        scssOrderConfig.get('showErrorMessages');
+
+    if (changeOnSave) {
+        config.changeOnSave = changeOnSave;
+    }
+    if (orderList) {
+        config.orderList = orderList;
+    }
+    if (showErrorMessages) {
+        config.showErrorMessages = showErrorMessages;
+    }
+    // ---------------------------------------
+    // const endTimestamp = Date.now();
+    // const elapsedTime = endTimestamp - startTimestamp;
+    // console.log(`실행 시간: ${elapsedTime}밀리초`);
+
+    // let changeOnSave: boolean = vscode.workspace
+    //     .getConfiguration('scss-order')
+    //     .get('changeOnSave', true);
+}
+
+async function getPackageJsonConfig(config: Config) {
+    try {
+        let fileJson = await getFileJson('package.json');
+
+        if (!fileJson.scssOrderConfig) {
+            return;
+        }
+        if (fileJson.scssOrderConfig.orderList) {
+            config.orderList = fileJson.scssOrderConfig.orderList;
+        }
+        if (fileJson.scssOrderConfig.changeOnSave) {
+            config.changeOnSave = fileJson.scssOrderConfig.changeOnSave;
+        }
+        if (fileJson.scssOrderConfig.showErrorMessages) {
+            config.showErrorMessages =
+                fileJson.scssOrderConfig.showErrorMessages;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function getSassOrderSetting(config: Config, fileName: string) {
+    try {
+        let fileJson = await getFileJson(fileName);
+
+        console.log('fileJson', fileJson);
+
+        if (fileJson.orderList) {
+            config.orderList = fileJson.orderList;
+        }
+        if (fileJson.changeOnSave) {
+            config.changeOnSave = fileJson.changeOnSave;
+        }
+        if (fileJson.showErrorMessages) {
+            config.showErrorMessages = fileJson.showErrorMessages;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function getConfig() {
     let config = {
         orderList: [],
         changeOnSave: true,
         showErrorMessages: false,
     };
 
-    vscode.workspace
-        .findFiles('**/package.json', '**/node_modules/**', 1)
-        .then((files) => {
-            console.log('aaa');
+    console.log('111111');
 
-            if (files.length < 1) {
-                return;
-            }
-            const packageJsonConfigPath = files[0].fsPath;
+    // settings.json / .vscode/setting.json
+    getCodeSetting(config);
 
-            fs.readFile(packageJsonConfigPath, 'utf8', (err, data) => {
-                if (err) {
-                    return;
-                }
+    // package.json
+    await getPackageJsonConfig(config);
 
-                const config = JSON.parse(data);
-                if (!config.scssOrderConfig) {
-                    return;
-                }
-                console.log(config.scssOrderConfig);
-            });
-        });
+    // scss-order.json
+    await getSassOrderSetting(config, 'scss-order.json');
+
+    // .scss-order.json
+    await getSassOrderSetting(config, '.scss-order.json');
+
+    // scss-orderrc
+    await getSassOrderSetting(config, 'scss-orderrc');
+
+    console.log('orderList:', config.orderList);
 }
 
 // ---------------------------------------- Activate ----------------------------------------
+// TODO: do benchmarking wich is faster: open setting files every time or detect setting and set setting value
 export function activate(context: vscode.ExtensionContext) {
-    getConfig();
+    const config = getConfig();
 
     // On save Unsaved Files
     context.subscriptions.push(
         vscode.workspace.onWillSaveTextDocument(
             (event: vscode.TextDocumentWillSaveEvent) => {
-                // TODO: change with config value not juste true
-                let changeOnSave: boolean = vscode.workspace
-                    .getConfiguration('scss-order')
-                    .get('changeOnSave', true);
+                getConfig();
+                // scss-order.json
+                // .scss-order.json
+                // scss-orderrc
 
                 console.log('aaa');
 
                 if (
                     (event.document.languageId === 'scss' ||
                         event.document.languageId === 'sass') &&
-                    event.document.isDirty &&
-                    changeOnSave
+                    event.document.isDirty
                 ) {
                     console.log('b2bb');
 
