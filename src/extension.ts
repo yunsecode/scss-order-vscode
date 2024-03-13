@@ -189,8 +189,6 @@ async function getFileJson(fileName: string) {
 }
 
 function getCodeSetting(config: Config) {
-    console.log('checkpoint 1');
-
     const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
 
     const changeOnSave: boolean | undefined =
@@ -209,12 +207,9 @@ function getCodeSetting(config: Config) {
     if (showErrorMessages !== undefined) {
         config.showErrorMessages = showErrorMessages;
     }
-    console.log('checkpoint 2');
 }
 
 async function getPackageJsonConfig(config: Config) {
-    console.log('checkpoint 3');
-
     try {
         let fileJson = await getFileJson('package.json');
 
@@ -234,12 +229,9 @@ async function getPackageJsonConfig(config: Config) {
     } catch (error) {
         console.error('Error:', error);
     }
-    console.log('checkpoint 4');
 }
 
 async function getSassOrderSetting(config: Config, fileName: string) {
-    console.log('getSassOrderSetting', fileName, '1');
-
     try {
         let fileJson = await getFileJson(fileName);
 
@@ -255,7 +247,6 @@ async function getSassOrderSetting(config: Config, fileName: string) {
     } catch (error) {
         console.error('Error:', error);
     }
-    console.log('getSassOrderSetting', fileName, '2');
 }
 
 async function getConfig(): Promise<Config> {
@@ -264,8 +255,6 @@ async function getConfig(): Promise<Config> {
         changeOnSave: true,
         showErrorMessages: false,
     };
-
-    console.log('checkpoint 0');
 
     // settings.json / .vscode/setting.json
     getCodeSetting(config);
@@ -282,7 +271,6 @@ async function getConfig(): Promise<Config> {
     // scss-orderrc
     await getSassOrderSetting(config, 'scss-orderrc');
 
-    console.log('checkpoint 5');
     return config;
 }
 
@@ -292,39 +280,51 @@ function validateSCSS(filePath: string): boolean {
         const result = sass.renderSync({
             file: filePath,
         });
-        // console.log(result);
-        console.log('is Valid');
+        //
 
         return true; // 유효한 SCSS 파일인 경우 true를 반환
     } catch (error) {
         // console.error('Error validating SCSS:', error);
-        console.log('is Not Valid');
+
         return false; // 유효하지 않은 SCSS 파일인 경우 false를 반환
     }
 }
 // ---------------------------------------- Activate ----------------------------------------
+// TODO: reset cursor place
 // On Cmd + s
+
+function waitForOneSecond() {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // 1초 후에 resolve를 호출하여 Promise를 완료합니다.
+            resolve(true);
+        }, 1000); // 1초는 1000밀리초 입니다.
+    });
+}
+
 function onSave() {
     return vscode.workspace.onWillSaveTextDocument(
         (event: vscode.TextDocumentWillSaveEvent) => {
-            if (!event.document.isDirty) {
-                return;
-            }
-            // TODO: change with config value not juste true
-            if (
-                event.document.languageId === 'scss' ||
-                event.document.languageId === 'sass'
-            ) {
-                console.log('b2bb');
+            event.waitUntil(
+                (async () => {
+                    try {
+                        if (
+                            !event.document.isDirty ||
+                            (event.document.languageId !== 'scss' &&
+                                event.document.languageId !== 'sass')
+                        ) {
+                            return;
+                        }
 
-                let config: Config = {
-                    orderList: [],
-                    changeOnSave: true,
-                    showErrorMessages: false,
-                };
-                order(config);
-                // event.waitUntil(order(config));
-            }
+                        const conf = await getConfig();
+                        if (conf.changeOnSave) {
+                            order(conf);
+                        }
+                    } catch (error) {
+                        console.error('Async operation failed:', error);
+                    }
+                })(),
+            );
         },
     );
 }
@@ -334,8 +334,6 @@ function onCommand() {
     return vscode.commands.registerCommand(
         'scss-order.order',
         async function () {
-            console.log('order style');
-
             const config = await getConfig();
 
             order(config);
