@@ -80,69 +80,83 @@ function setOrderArray(config: Config) {
     return new_arr;
 }
 
+function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr: string[]) {
+    editor
+        .edit((editBuilder: vscode.TextEditorEdit) => {
+            const text = editor.document.getText();
+            let splitResult = [];
+            const lineCount = editor.document.lineCount;
+            let i = 0;
+
+            while (i < lineCount) {
+                splitResult.push(editor.document.lineAt(i).text);
+                // TODO: if in one line, there are many properties, have to split it
+                i++;
+            }
+
+            // parse
+            i = 0;
+
+            while (i < lineCount) {
+                let next = i + 1;
+                let startCheck = 0;
+                let endCheck = 0;
+
+                if (splitResult[i].includes('{')) {
+                    startCheck = i;
+                    while (next < lineCount) {
+                        if (splitResult[next].includes('{') || splitResult[next].includes('}')) {
+                            endCheck = next;
+                            i = next - 1;
+                            break;
+                        }
+                        next++;
+                    }
+                }
+                if (startCheck !== 0 && endCheck - startCheck > 2) {
+                    reOrderArray(orderListArr, splitResult, startCheck, endCheck);
+                }
+                i++;
+            }
+
+            let newText = splitResult.join('\n');
+            // newText = newText + "\n";
+
+            editor.edit((editBuilder) => {
+                const document = editor.document;
+                const fullRange = new vscode.Range(
+                    document.positionAt(0),
+                    document.positionAt(editor.document.getText().length),
+                );
+
+                editBuilder.replace(fullRange, newText);
+            });
+        })
+        .then((success) => {
+            if (!success && config.showErrorMessages) {
+                vscode.window.showErrorMessage('Could not process SCSS file.');
+            }
+        });
+}
+
+function noFormatWithOrder() {}
+
 function order(config: Config): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+        // Check editor
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             return reject('No active text editor');
         }
+
+        // Set Order List
         const orderListArr = setOrderArray(config);
 
-        editor
-            .edit((editBuilder: vscode.TextEditorEdit) => {
-                const text = editor.document.getText();
-                let splitResult = [];
-                const lineCount = editor.document.lineCount;
-                let i = 0;
-
-                while (i < lineCount) {
-                    splitResult.push(editor.document.lineAt(i).text);
-                    i++;
-                }
-
-                // parse
-                i = 0;
-
-                while (i < lineCount) {
-                    let next = i + 1;
-                    let startCheck = 0;
-                    let endCheck = 0;
-
-                    if (splitResult[i].includes('{')) {
-                        startCheck = i;
-                        while (next < lineCount) {
-                            if (splitResult[next].includes('{') || splitResult[next].includes('}')) {
-                                endCheck = next;
-                                i = next - 1;
-                                break;
-                            }
-                            next++;
-                        }
-                    }
-                    if (startCheck !== 0 && endCheck - startCheck > 2) {
-                        reOrderArray(orderListArr, splitResult, startCheck, endCheck);
-                    }
-                    i++;
-                }
-
-                let newText = splitResult.join('\n');
-                // newText = newText + "\n";
-
-                editor.edit((editBuilder) => {
-                    const document = editor.document;
-                    const fullRange = new vscode.Range(
-                        document.positionAt(0),
-                        document.positionAt(editor.document.getText().length),
-                    );
-
-                    editBuilder.replace(fullRange, newText);
-                });
-            })
-            .then((success) => {
-                if (!success && config.showErrorMessages) {
-                    vscode.window.showErrorMessage('Could not process SCSS file.');
-                }
-            });
+        if (config.autoFormat) {
+            formatWithOrder(editor, config, orderListArr);
+        } else {
+            noFormatWithOrder();
+        }
     });
 }
 
@@ -169,6 +183,7 @@ function onSave() {
                         (event.document.languageId !== 'scss' && event.document.languageId !== 'sass') ||
                         !validateSCSS(event.document.uri.fsPath)
                     ) {
+                        // TODO: if not valid err Msg?
                         return;
                     }
                     const conf = await getConfig();
