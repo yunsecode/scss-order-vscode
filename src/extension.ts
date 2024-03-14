@@ -128,31 +128,18 @@ function order(config: Config): Thenable<boolean> {
                 let newText = splitResult.join('\n');
                 // newText = newText + "\n";
 
-                editor
-                    .edit((editBuilder) => {
-                        const document = editor.document;
-                        const fullRange = new vscode.Range(
-                            document.positionAt(0),
-                            document.positionAt(editor.document.getText().length),
-                        );
+                editor.edit((editBuilder) => {
+                    const document = editor.document;
+                    const fullRange = new vscode.Range(
+                        document.positionAt(0),
+                        document.positionAt(editor.document.getText().length),
+                    );
 
-                        editBuilder.replace(fullRange, newText);
-                    })
-                    .then((success) => {
-                        if (success) {
-                            vscode.window.showInformationMessage('Success to process SCSS file.');
-                        } else {
-                            vscode.window.showErrorMessage('Could not process SCSS file.');
-                        }
-                    });
+                    editBuilder.replace(fullRange, newText);
+                });
             })
             .then((success) => {
-                if (success) {
-                    // vscode.window.showInformationMessage(
-                    //     'Processed SCSS file.',
-                    // );
-                    resolve(true);
-                } else {
+                if (!success && config.showErrorMessages) {
                     vscode.window.showErrorMessage('Could not process SCSS file.');
                 }
             });
