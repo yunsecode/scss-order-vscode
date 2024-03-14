@@ -34,7 +34,7 @@ function getCodeSetting(config: Config) {
     const formatForm = scssOrderConfig.get<FormatForm>('formatForm');
     if (formatForm) {
         const validFormatForm: FormatForm = {
-            tabSize: formatForm.tabSize,
+            tabSize: formatForm.tabSize ? formatForm.tabSize : config.formatForm.tabSize,
         };
 
         config.formatForm = validFormatForm;
@@ -65,7 +65,7 @@ async function getPackageJsonConfig(config: Config) {
             }
             if (formatForm) {
                 const validFormatForm: FormatForm = {
-                    tabSize: formatForm.tabSize,
+                    tabSize: formatForm.tabSize ? formatForm.tabSize : config.formatForm.tabSize,
                 };
                 config.formatForm = validFormatForm;
             }
@@ -93,7 +93,7 @@ async function getSassOrderSetting(config: Config, fileName: string) {
         }
         if (fileJson.formatForm) {
             const validFormatForm: FormatForm = {
-                tabSize: fileJson.formatForm.tabSize,
+                tabSize: fileJson.formatForm.tabSize ? fileJson.formatForm.tabSize : config.formatForm.tabSize,
             };
             config.formatForm = validFormatForm;
         }
