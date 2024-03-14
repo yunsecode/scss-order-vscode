@@ -179,22 +179,11 @@ function onSave() {
     return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
         event.waitUntil(
             (async () => {
-                vscode.window.showInformationMessage(
-                    `isDirty ${event.document.isDirty}, lang ${
-                        event.document.languageId !== 'scss' && event.document.languageId !== 'sass'
-                    }, ${event.document.languageId} ${event.document.languageId === 'scss'} ${
-                        event.document.languageId === 'sass'
-                    }  isValid ${validateSCSS(event.document.uri.fsPath)}`,
-                );
-
-                console.log('isDirty', event.document.isDirty);
-                console.log('lang', event.document.languageId !== 'scss' && event.document.languageId !== 'sass');
-                console.log('isValid', validateSCSS(event.document.uri.fsPath));
-
                 try {
+                    // TODO: check valid scss (problem with import src/)
                     if (
-                        (event.document.languageId !== 'scss' && event.document.languageId !== 'sass') ||
-                        !validateSCSS(event.document.uri.fsPath)
+                        !event.document.isDirty ||
+                        (event.document.languageId !== 'scss' && event.document.languageId !== 'sass')
                     ) {
                         // TODO: if not valid err Msg?
                         return;
