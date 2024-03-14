@@ -232,8 +232,8 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr
             newText += addSpacesToBeginning(splitTable[i], tabNum * config.formatForm.tabSize);
         }
     }
-
-    console.log(newText);
+    newText += '\n';
+    // console.log(newText);
 
     editor
         .edit((editBuilder) => {
