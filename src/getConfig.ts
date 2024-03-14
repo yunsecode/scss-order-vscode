@@ -36,7 +36,6 @@ function getCodeSetting(config: Config) {
         const validFormatForm: FormatForm = {
             tabSize: formatForm.tabSize,
         };
-        console.log(validFormatForm);
 
         config.formatForm = validFormatForm;
     }

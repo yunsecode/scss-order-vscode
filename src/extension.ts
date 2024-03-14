@@ -81,56 +81,54 @@ function setOrderArray(config: Config) {
 }
 
 function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr: string[]) {
+    const text = editor.document.getText();
+    let splitResult = [];
+    const lineCount = editor.document.lineCount;
+    let i = 0;
+
+    while (i < lineCount) {
+        splitResult.push(editor.document.lineAt(i).text);
+        // TODO: if in one line, there are many properties, have to split it
+        i++;
+    }
+
+    // parse
+    i = 0;
+
+    while (i < lineCount) {
+        let next = i + 1;
+        let startCheck = 0;
+        let endCheck = 0;
+
+        if (splitResult[i].includes('{')) {
+            startCheck = i;
+            while (next < lineCount) {
+                if (splitResult[next].includes('{') || splitResult[next].includes('}')) {
+                    endCheck = next;
+                    i = next - 1;
+                    break;
+                }
+                next++;
+            }
+        }
+        if (startCheck !== 0 && endCheck - startCheck > 2) {
+            reOrderArray(orderListArr, splitResult, startCheck, endCheck);
+        }
+        i++;
+    }
+
+    let newText = splitResult.join('\n');
+    // newText = newText + "\n";
+
     editor
-        .edit((editBuilder: vscode.TextEditorEdit) => {
-            const text = editor.document.getText();
-            let splitResult = [];
-            const lineCount = editor.document.lineCount;
-            let i = 0;
+        .edit((editBuilder) => {
+            const document = editor.document;
+            const fullRange = new vscode.Range(
+                document.positionAt(0),
+                document.positionAt(editor.document.getText().length),
+            );
 
-            while (i < lineCount) {
-                splitResult.push(editor.document.lineAt(i).text);
-                // TODO: if in one line, there are many properties, have to split it
-                i++;
-            }
-
-            // parse
-            i = 0;
-
-            while (i < lineCount) {
-                let next = i + 1;
-                let startCheck = 0;
-                let endCheck = 0;
-
-                if (splitResult[i].includes('{')) {
-                    startCheck = i;
-                    while (next < lineCount) {
-                        if (splitResult[next].includes('{') || splitResult[next].includes('}')) {
-                            endCheck = next;
-                            i = next - 1;
-                            break;
-                        }
-                        next++;
-                    }
-                }
-                if (startCheck !== 0 && endCheck - startCheck > 2) {
-                    reOrderArray(orderListArr, splitResult, startCheck, endCheck);
-                }
-                i++;
-            }
-
-            let newText = splitResult.join('\n');
-            // newText = newText + "\n";
-
-            editor.edit((editBuilder) => {
-                const document = editor.document;
-                const fullRange = new vscode.Range(
-                    document.positionAt(0),
-                    document.positionAt(editor.document.getText().length),
-                );
-
-                editBuilder.replace(fullRange, newText);
-            });
+            editBuilder.replace(fullRange, newText);
         })
         .then((success) => {
             if (!success && config.showErrorMessages) {
