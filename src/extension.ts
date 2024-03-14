@@ -177,9 +177,12 @@ function onSave() {
     return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
         event.waitUntil(
             (async () => {
+                console.log('isDirty', event.document.isDirty);
+                console.log('lang', event.document.languageId !== 'scss' && event.document.languageId !== 'sass');
+                console.log('isValid', validateSCSS(event.document.uri.fsPath));
+
                 try {
                     if (
-                        !event.document.isDirty ||
                         (event.document.languageId !== 'scss' && event.document.languageId !== 'sass') ||
                         !validateSCSS(event.document.uri.fsPath)
                     ) {
