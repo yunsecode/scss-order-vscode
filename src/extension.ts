@@ -49,9 +49,7 @@ function reOrderArray(text: any, startCheck: number, endCheck: number) {
     // console.log(newArr);
 
     defaultOrder.forEach((orderItem) => {
-        const foundIndex = newArr.findIndex((property) =>
-            property.trim().startsWith(orderItem + ':'),
-        );
+        const foundIndex = newArr.findIndex((property) => property.trim().startsWith(orderItem + ':'));
 
         if (foundIndex !== -1) {
             reorderedProperties.push(newArr[foundIndex]);
@@ -97,10 +95,7 @@ function order(config: Config): Thenable<boolean> {
                     if (splitResult[i].includes('{')) {
                         startCheck = i;
                         while (next < lineCount) {
-                            if (
-                                splitResult[next].includes('{') ||
-                                splitResult[next].includes('}')
-                            ) {
+                            if (splitResult[next].includes('{') || splitResult[next].includes('}')) {
                                 endCheck = next;
                                 i = next - 1;
                                 break;
@@ -122,22 +117,16 @@ function order(config: Config): Thenable<boolean> {
                         const document = editor.document;
                         const fullRange = new vscode.Range(
                             document.positionAt(0),
-                            document.positionAt(
-                                editor.document.getText().length,
-                            ),
+                            document.positionAt(editor.document.getText().length),
                         );
 
                         editBuilder.replace(fullRange, newText);
                     })
                     .then((success) => {
                         if (success) {
-                            vscode.window.showInformationMessage(
-                                'Success to process SCSS file.',
-                            );
+                            vscode.window.showInformationMessage('Success to process SCSS file.');
                         } else {
-                            vscode.window.showErrorMessage(
-                                'Could not process SCSS file.',
-                            );
+                            vscode.window.showErrorMessage('Could not process SCSS file.');
                         }
                     });
             })
@@ -148,30 +137,30 @@ function order(config: Config): Thenable<boolean> {
                     // );
                     resolve(true);
                 } else {
-                    vscode.window.showErrorMessage(
-                        'Could not process SCSS file.',
-                    );
+                    vscode.window.showErrorMessage('Could not process SCSS file.');
                 }
             });
     });
 }
 
 // ---------------------------------------- Get Config ----------------------------------------
+interface FormatForm {
+    tabSize: number;
+}
+
 interface Config {
     orderList: string[];
     changeOnSave: boolean;
     showErrorMessages: boolean;
+    autoFormat: boolean;
+    formatForm: FormatForm;
     // 그냥 클래스, :hover 이런 순서
 }
 
 async function getFileJson(fileName: string) {
     try {
         // 파일 검색 비동기 작업 수행
-        const files = await vscode.workspace.findFiles(
-            `**/${fileName}`,
-            '**/node_modules/**',
-            1,
-        );
+        const files = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
 
         if (files.length < 1) {
             return;
@@ -191,43 +180,44 @@ async function getFileJson(fileName: string) {
 function getCodeSetting(config: Config) {
     const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
 
-    const changeOnSave: boolean | undefined =
-        scssOrderConfig.get<boolean>('changeOnSave');
-    const orderList: string[] | undefined =
-        scssOrderConfig.get<string[]>('orderList');
-    const showErrorMessages: boolean | undefined =
-        scssOrderConfig.get<boolean>('showErrorMessages');
-
-    if (changeOnSave !== undefined) {
-        config.changeOnSave = changeOnSave;
-    }
-    if (orderList !== undefined) {
-        config.orderList = orderList;
-    }
-    if (showErrorMessages !== undefined) {
-        config.showErrorMessages = showErrorMessages;
-    }
+    config.changeOnSave = scssOrderConfig.get<boolean>('changeOnSave') || config.changeOnSave;
+    config.orderList = scssOrderConfig.get<string[]>('orderList') || config.orderList;
+    config.showErrorMessages = scssOrderConfig.get<boolean>('showErrorMessages') || config.showErrorMessages;
+    config.autoFormat = scssOrderConfig.get<boolean>('autoFormat') || config.autoFormat;
+    config.formatForm = scssOrderConfig.get<FormatForm>('formatForm') || config.formatForm;
 }
 
+// TODO: benchmarking ?
 async function getPackageJsonConfig(config: Config) {
     try {
-        let fileJson = await getFileJson('package.json');
+        const fileJson = await getFileJson('package.json'); // 파일에서 JSON 데이터를 가져옴
 
-        if (!fileJson.scssOrderConfig) {
-            return;
-        }
-        if (fileJson.scssOrderConfig.orderList) {
-            config.orderList = fileJson.scssOrderConfig.orderList;
-        }
-        if (fileJson.scssOrderConfig.changeOnSave) {
-            config.changeOnSave = fileJson.scssOrderConfig.changeOnSave;
-        }
-        if (fileJson.scssOrderConfig.showErrorMessages) {
-            config.showErrorMessages =
-                fileJson.scssOrderConfig.showErrorMessages;
+        const { scssOrderConfig } = fileJson; // scssOrderConfig 추출
+
+        if (scssOrderConfig) {
+            const { orderList, changeOnSave, showErrorMessages, autoFormat, formatForm } = scssOrderConfig;
+
+            if (orderList) {
+                config.orderList = orderList;
+            }
+            if (changeOnSave) {
+                config.changeOnSave = changeOnSave;
+            }
+            if (showErrorMessages) {
+                config.showErrorMessages = showErrorMessages;
+            }
+            if (autoFormat) {
+                config.autoFormat = autoFormat;
+            }
+            if (formatForm) {
+                console.log('formatForm', formatForm);
+
+                config.formatForm = formatForm;
+                console.log(config.formatForm);
+            }
         }
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', error); // 에러 처리
     }
 }
 
@@ -244,16 +234,27 @@ async function getSassOrderSetting(config: Config, fileName: string) {
         if (fileJson.showErrorMessages) {
             config.showErrorMessages = fileJson.showErrorMessages;
         }
+        if (fileJson.autoFormat) {
+            config.autoFormat = fileJson.autoFormat;
+        }
+        if (fileJson.formatForm) {
+            config.formatForm = fileJson.formatForm;
+        }
     } catch (error) {
         console.error('Error:', error);
     }
 }
 
 async function getConfig(): Promise<Config> {
+    // TODO: Get default valur automotically
     let config: Config = {
         orderList: [],
         changeOnSave: true,
         showErrorMessages: false,
+        autoFormat: false,
+        formatForm: {
+            tabSize: 4,
+        },
     };
 
     // settings.json / .vscode/setting.json
@@ -289,6 +290,7 @@ function validateSCSS(filePath: string): boolean {
         return false;
     }
 }
+
 // ---------------------------------------- Activate ----------------------------------------
 // TODO: reset cursor place
 // On Cmd + s
@@ -303,44 +305,39 @@ function waitForOneSecond() {
 }
 
 function onSave() {
-    return vscode.workspace.onWillSaveTextDocument(
-        (event: vscode.TextDocumentWillSaveEvent) => {
-            event.waitUntil(
-                (async () => {
-                    try {
-                        if (
-                            !event.document.isDirty ||
-                            (event.document.languageId !== 'scss' &&
-                                event.document.languageId !== 'sass') ||
-                            !validateSCSS(event.document.uri.fsPath)
-                        ) {
-                            return;
-                        }
-                        const conf = await getConfig();
-                        if (conf.changeOnSave) {
-                            order(conf);
-                        }
-                    } catch (error) {
-                        console.error('Async operation failed:', error);
+    return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
+        event.waitUntil(
+            (async () => {
+                try {
+                    if (
+                        !event.document.isDirty ||
+                        (event.document.languageId !== 'scss' && event.document.languageId !== 'sass') ||
+                        !validateSCSS(event.document.uri.fsPath)
+                    ) {
+                        return;
                     }
-                })(),
-            );
-        },
-    );
+                    const conf = await getConfig();
+                    if (conf.changeOnSave) {
+                        order(conf);
+                    }
+                } catch (error) {
+                    console.error('Async operation failed:', error);
+                }
+            })(),
+        );
+    });
 }
 
 // With Command + Shift + P
 function onCommand() {
-    return vscode.commands.registerCommand(
-        'scss-order.order',
-        async function () {
-            const config = await getConfig();
+    return vscode.commands.registerCommand('scss-order.order', async function () {
+        const config = await getConfig();
 
-            order(config);
-        },
-    );
+        order(config);
+    });
 }
 
+// TODO: 내 로컬에 있는 package.json에 있는 값들을 interface 파일에 넣고, 그 interface를 채우는 식으로
 export function activate(context: vscode.ExtensionContext) {
     // const startTimestamp = Date.now();
     // // ---------------------------------------

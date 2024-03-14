@@ -1,76 +1,88 @@
 {
-  "name": "scss-order",
-  "publisher": "yunsecode",
-  "displayName": "Scss Order",
-  "description": "This is to order the style in scss file",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yunsecode09/scss-order.git"
-  },
-  "version": "0.0.9",
-  "engines": {
-    "vscode": "^1.52.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "icon": "icon.png",
-  "activationEvents": [
-    "onLanguage:scss"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "scss-order.order",
-        "title": "Order Style"
-      }
+    "name": "scss-order",
+    "publisher": "yunsecode",
+    "displayName": "Scss Order",
+    "description": "This is to order the style in scss file",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yunsecode09/scss-order.git"
+    },
+    "version": "0.0.9",
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "categories": [
+        "Other"
     ],
-    "configuration": {
-      "title": "Order Setting",
-      "properties": {
-        "scss-order.orderList": {
-          "type": "array",
-          "default": "",
-          "description": "Order of style elements",
-          "items": {
-            "type": "string"
-          }
-        },
-        "scss-order.changeOnSave": {
-          "type": "boolean",
-          "default": "true",
-          "description": "Change on save ?"
-        },
-        "scss-order.showErrorMessages": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show error messages or not",
-          "scope": "resource"
+    "icon": "icon.png",
+    "activationEvents": [
+        "onLanguage:scss"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "scss-order.order",
+                "title": "Order Style"
+            }
+        ],
+        "configuration": {
+            "title": "Order Setting",
+            "properties": {
+                "scss-order.orderList": {
+                    "type": "array",
+                    "default": "",
+                    "description": "Order of style elements",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "scss-order.changeOnSave": {
+                    "type": "boolean",
+                    "default": "true",
+                    "description": "Change on save ?"
+                },
+                "scss-order.showErrorMessages": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show error messages or not",
+                    "scope": "resource"
+                },
+                "scss-order.autoFormat": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Auto format or not the scss file",
+                    "scope": "resource"
+                },
+                "scss-order.formatForm": {
+                    "type": "object",
+                    "default": {
+                        "tabSize": 4
+                    }
+                }
+            }
         }
-      }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "vscode-test"
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.6",
+        "@types/node": "18.x",
+        "@types/vscode": "^1.52.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.2",
+        "@typescript-eslint/parser": "^7.0.2",
+        "@vscode/test-cli": "^0.0.6",
+        "@vscode/test-electron": "^2.3.9",
+        "eslint": "^8.56.0",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "sass": "^1.71.1"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.52.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.2",
-    "@typescript-eslint/parser": "^7.0.2",
-    "@vscode/test-cli": "^0.0.6",
-    "@vscode/test-electron": "^2.3.9",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "sass": "^1.71.1"
-  }
 }
