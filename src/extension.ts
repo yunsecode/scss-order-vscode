@@ -182,7 +182,7 @@ function onSave() {
                 vscode.window.showInformationMessage(
                     `isDirty ${event.document.isDirty}, lang ${
                         event.document.languageId !== 'scss' && event.document.languageId !== 'sass'
-                    }, isValid ${validateSCSS(event.document.uri.fsPath)}`,
+                    }, ${event.document.languageId} isValid ${validateSCSS(event.document.uri.fsPath)}`,
                 );
 
                 console.log('isDirty', event.document.isDirty);
