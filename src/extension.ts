@@ -152,7 +152,9 @@ function order(config: Config): Thenable<boolean> {
         // Set Order List
         const orderListArr = setOrderArray(config);
 
+        vscode.window.showInformationMessage(`order ck 1`);
         if (!config.autoFormat) {
+            vscode.window.showInformationMessage(`order ck 2`);
             formatWithOrder(editor, config, orderListArr);
         } else {
             noFormatWithOrder();
@@ -177,6 +179,12 @@ function onSave() {
     return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
         event.waitUntil(
             (async () => {
+                vscode.window.showInformationMessage(
+                    `isDirty ${event.document.isDirty}, lang ${
+                        event.document.languageId !== 'scss' && event.document.languageId !== 'sass'
+                    }, isValid ${validateSCSS(event.document.uri.fsPath)}`,
+                );
+
                 console.log('isDirty', event.document.isDirty);
                 console.log('lang', event.document.languageId !== 'scss' && event.document.languageId !== 'sass');
                 console.log('isValid', validateSCSS(event.document.uri.fsPath));
