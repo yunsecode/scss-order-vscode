@@ -41,16 +41,15 @@ const defaultOrder = [
     'font-size',
 ];
 
-function reOrderArray(text: any, startCheck: number, endCheck: number) {
+function reOrderArray(orderListArr: string[], text: any, startCheck: number, endCheck: number) {
     let newArr: any[] = [];
     let reorderedProperties: any[] = [];
 
     for (let i = startCheck + 1; i < endCheck; i++) {
         newArr.push(text[i]);
     }
-    // console.log(newArr);
 
-    defaultOrder.forEach((orderItem) => {
+    orderListArr.forEach((orderItem) => {
         const foundIndex = newArr.findIndex((property) => property.trim().startsWith(orderItem + ':'));
 
         if (foundIndex !== -1) {
@@ -68,12 +67,27 @@ function reOrderArray(text: any, startCheck: number, endCheck: number) {
     }
 }
 
+function setOrderArray(config: Config) {
+    const new_arr: string[] = [...config.orderList];
+
+    // arr1에서 중복되지 않는 요소를 필터링하여 new_arr에 추가
+    for (const item of defaultOrder) {
+        if (!config.orderList.includes(item)) {
+            new_arr.push(item);
+        }
+    }
+
+    return new_arr;
+}
+
 function order(config: Config): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             return reject('No active text editor');
         }
+        const orderListArr = setOrderArray(config);
+
         editor
             .edit((editBuilder: vscode.TextEditorEdit) => {
                 const text = editor.document.getText();
@@ -106,7 +120,7 @@ function order(config: Config): Thenable<boolean> {
                         }
                     }
                     if (startCheck !== 0 && endCheck - startCheck > 2) {
-                        reOrderArray(splitResult, startCheck, endCheck);
+                        reOrderArray(orderListArr, splitResult, startCheck, endCheck);
                     }
                     i++;
                 }
