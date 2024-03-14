@@ -152,7 +152,7 @@ function order(config: Config): Thenable<boolean> {
         // Set Order List
         const orderListArr = setOrderArray(config);
 
-        if (config.autoFormat) {
+        if (!config.autoFormat) {
             formatWithOrder(editor, config, orderListArr);
         } else {
             noFormatWithOrder();
