@@ -217,19 +217,19 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr
     for (let i = 1; i < splitTable.length; i++) {
         if (splitTable[i - 1].includes('{')) {
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], (tabNum + 1) * 4);
+            newText += addSpacesToBeginning(splitTable[i], (tabNum + 1) * config.formatForm.tabSize);
             tabNum++;
         } else if (splitTable[i] === '}') {
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], (tabNum - 1) * 4);
+            newText += addSpacesToBeginning(splitTable[i], (tabNum - 1) * config.formatForm.tabSize);
             tabNum = tabNum - 1;
         } else if (splitTable[i].includes('{')) {
             newText += '\n';
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], tabNum * 4);
+            newText += addSpacesToBeginning(splitTable[i], tabNum * config.formatForm.tabSize);
         } else {
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], tabNum * 4);
+            newText += addSpacesToBeginning(splitTable[i], tabNum * config.formatForm.tabSize);
         }
     }
 
