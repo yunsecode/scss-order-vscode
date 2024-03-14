@@ -277,16 +277,16 @@ async function getConfig(): Promise<Config> {
 // ---------------------------------------- Sass ----------------------------------------
 function validateSCSS(filePath: string): boolean {
     try {
-        const result = sass.renderSync({
-            file: filePath,
-        });
-        //
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return false;
+        }
+        const text = editor.document.getText();
+        const result = sass.compileString(text);
 
-        return true; // 유효한 SCSS 파일인 경우 true를 반환
+        return true;
     } catch (error) {
-        // console.error('Error validating SCSS:', error);
-
-        return false; // 유효하지 않은 SCSS 파일인 경우 false를 반환
+        return false;
     }
 }
 // ---------------------------------------- Activate ----------------------------------------
@@ -311,11 +311,11 @@ function onSave() {
                         if (
                             !event.document.isDirty ||
                             (event.document.languageId !== 'scss' &&
-                                event.document.languageId !== 'sass')
+                                event.document.languageId !== 'sass') ||
+                            !validateSCSS(event.document.uri.fsPath)
                         ) {
                             return;
                         }
-
                         const conf = await getConfig();
                         if (conf.changeOnSave) {
                             order(conf);
