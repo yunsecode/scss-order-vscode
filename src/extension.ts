@@ -80,7 +80,7 @@ function setOrderArray(config: Config) {
     return new_arr;
 }
 
-function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr: string[]) {
+function noFormatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr: string[]) {
     const text = editor.document.getText();
     let splitResult = [];
     const lineCount = editor.document.lineCount;
@@ -137,7 +137,120 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr
         });
 }
 
-function noFormatWithOrder() {}
+function splitPerLine(resultArr: string[], input: string) {
+    let currentIndex = 0;
+
+    for (let i = 0; i < input.length; i++) {
+        if (input[i] === '{' || input[i] === ';' || input[i] === '}') {
+            const substring = input.substring(currentIndex, i + 1).trim();
+            if (substring !== '') {
+                resultArr.push(substring);
+            }
+            currentIndex = i + 1;
+        }
+    }
+
+    if (currentIndex < input.length) {
+        const substring = input.substring(currentIndex).trim();
+        if (substring !== '') {
+            resultArr.push(substring);
+        }
+    }
+}
+
+function splitTextWithDelimiter(text: string): string[] {
+    // 줄바꿈 문자('\n')을 기준으로 문자열을 분할
+    const lines = text.split('\n');
+    const resultArr: string[] = [];
+
+    for (const line of lines) {
+        splitPerLine(resultArr, line);
+    }
+
+    return resultArr;
+}
+
+function addSpacesToBeginning(input: string, count: number): string {
+    if (count <= 0) {
+        return input;
+    }
+    const spaces = ' '.repeat(count);
+    return spaces + input;
+}
+
+function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr: string[]) {
+    const splitTable = splitTextWithDelimiter(editor.document.getText());
+
+    let i = 0;
+
+    while (i < splitTable.length) {
+        let next = i + 1;
+        let startCheck = 0;
+        let endCheck = 0;
+
+        // Check between where do I have to sort
+        if (splitTable[i].includes('{')) {
+            startCheck = i;
+            while (next < splitTable.length) {
+                if (splitTable[next].includes('{') || splitTable[next].includes('}')) {
+                    endCheck = next;
+                    i = next - 1;
+                    break;
+                }
+                next++;
+            }
+        }
+
+        // Sort
+        if (endCheck - startCheck > 2) {
+            reOrderArray(orderListArr, splitTable, startCheck, endCheck);
+        }
+        i++;
+    }
+
+    // Format
+    // let newText = splitTable.join('\n');
+    // console.log('newText:\n', newText);
+    let newText = splitTable[0];
+    let tabNum = 0;
+
+    for (let i = 1; i < splitTable.length; i++) {
+        if (splitTable[i - 1].includes('{')) {
+            newText += '\n';
+            newText += addSpacesToBeginning(splitTable[i], (tabNum + 1) * 4);
+            tabNum++;
+        } else if (splitTable[i] === '}') {
+            newText += '\n';
+            newText += addSpacesToBeginning(splitTable[i], (tabNum - 1) * 4);
+            tabNum = tabNum - 1;
+        } else if (splitTable[i].includes('{')) {
+            newText += '\n';
+            newText += '\n';
+            newText += addSpacesToBeginning(splitTable[i], tabNum * 4);
+        } else {
+            newText += '\n';
+            newText += addSpacesToBeginning(splitTable[i], tabNum * 4);
+        }
+    }
+
+    console.log(newText);
+
+    editor
+        .edit((editBuilder) => {
+            const document = editor.document;
+            const fullRange = new vscode.Range(
+                document.positionAt(0),
+                document.positionAt(editor.document.getText().length),
+            );
+
+            editBuilder.replace(fullRange, newText);
+        })
+        .then((success) => {
+            if (!success && config.showErrorMessages) {
+                vscode.window.showErrorMessage('Could not process SCSS file.');
+            }
+        });
+}
 
 function order(config: Config): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -150,12 +263,10 @@ function order(config: Config): Thenable<boolean> {
         // Set Order List
         const orderListArr = setOrderArray(config);
 
-        vscode.window.showInformationMessage(`order ck 1`);
         if (!config.autoFormat) {
-            vscode.window.showInformationMessage(`order ck 2`);
-            formatWithOrder(editor, config, orderListArr);
+            noFormatWithOrder(editor, config, orderListArr);
         } else {
-            noFormatWithOrder();
+            formatWithOrder(editor, config, orderListArr);
         }
     });
 }
