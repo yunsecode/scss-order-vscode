@@ -31,7 +31,7 @@ function getCodeSetting(config: Config) {
     config.showErrorMessages = scssOrderConfig.get<boolean>('showErrorMessages') || config.showErrorMessages;
     config.autoFormat = scssOrderConfig.get<boolean>('autoFormat') || config.autoFormat;
     config.tabSize = scssOrderConfig.get<number>('tabSize') || config.tabSize;
-    config.spaceBetweenClass = scssOrderConfig.get<boolean>('spaceBetweenClass') || config.spaceBetweenClass;
+    config.spaceBeforeClass = scssOrderConfig.get<boolean>('spaceBeforeClass') || config.spaceBeforeClass;
 }
 
 // TODO: benchmarking ?
@@ -42,7 +42,7 @@ async function getPackageJsonConfig(config: Config) {
         const { scssOrderConfig } = fileJson; // scssOrderConfig 추출
 
         if (scssOrderConfig) {
-            const { orderList, changeOnSave, showErrorMessages, autoFormat, tabSize, spaceBetweenClass } =
+            const { orderList, changeOnSave, showErrorMessages, autoFormat, tabSize, spaceBeforeClass } =
                 scssOrderConfig;
 
             if (orderList) {
@@ -60,8 +60,8 @@ async function getPackageJsonConfig(config: Config) {
             if (tabSize) {
                 config.tabSize = tabSize;
             }
-            if (spaceBetweenClass) {
-                config.spaceBetweenClass = spaceBetweenClass;
+            if (spaceBeforeClass) {
+                config.spaceBeforeClass = spaceBeforeClass;
             }
         }
     } catch (error) {
@@ -89,8 +89,8 @@ async function getSassOrderSetting(config: Config, fileName: string) {
         if (fileJson.tabSize) {
             config.tabSize = fileJson.tabSize;
         }
-        if (fileJson.spaceBetweenClass !== undefined) {
-            config.spaceBetweenClass = fileJson.spaceBetweenClass;
+        if (fileJson.spaceBeforeClass !== undefined) {
+            config.spaceBeforeClass = fileJson.spaceBeforeClass;
         }
     } catch (error) {
         console.error('Error:', error);
@@ -105,7 +105,7 @@ export async function getConfig(): Promise<Config> {
         showErrorMessages: false,
         autoFormat: false,
         tabSize: 4,
-        spaceBetweenClass: true,
+        spaceBeforeClass: true,
     };
 
     // settings.json / .vscode/setting.json

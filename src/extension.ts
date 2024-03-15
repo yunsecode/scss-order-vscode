@@ -224,7 +224,7 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr
             newText += addSpacesToBeginning(splitTable[i], (tabNum - 1) * config.tabSize);
             tabNum = tabNum - 1;
         } else if (splitTable[i].includes('{')) {
-            if (config.spaceBetweenClass) {
+            if (config.spaceBeforeClass) {
                 newText += '\n';
             }
             newText += '\n';

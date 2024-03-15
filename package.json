@@ -60,7 +60,7 @@
                     "description": "Tab size",
                     "scope": "resource"
                 },
-                "scss-order.spaceBetweenClass": {
+                "scss-order.spaceBeforeClass": {
                     "type": "boolean",
                     "default": true,
                     "description": "space between class",
