@@ -54,11 +54,17 @@
                     "description": "Auto format or not the scss file",
                     "scope": "resource"
                 },
-                "scss-order.formatForm": {
-                    "type": "object",
-                    "default": {
-                        "tabSize": 4
-                    }
+                "scss-order.tabSize": {
+                    "type": "number",
+                    "default": 4,
+                    "description": "Tab size",
+                    "scope": "resource"
+                },
+                "scss-order.spaceBetweenClass": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "space between class",
+                    "scope": "resource"
                 }
             }
         }

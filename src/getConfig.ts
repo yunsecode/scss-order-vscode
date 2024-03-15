@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-import { Config, FormatForm } from './interface/config';
+import { Config } from './interface/config';
 
 async function getFileJson(fileName: string) {
     try {
@@ -30,15 +30,8 @@ function getCodeSetting(config: Config) {
     config.orderList = scssOrderConfig.get<string[]>('orderList') || config.orderList;
     config.showErrorMessages = scssOrderConfig.get<boolean>('showErrorMessages') || config.showErrorMessages;
     config.autoFormat = scssOrderConfig.get<boolean>('autoFormat') || config.autoFormat;
-
-    const formatForm = scssOrderConfig.get<FormatForm>('formatForm');
-    if (formatForm) {
-        const validFormatForm: FormatForm = {
-            tabSize: formatForm.tabSize ? formatForm.tabSize : config.formatForm.tabSize,
-        };
-
-        config.formatForm = validFormatForm;
-    }
+    config.tabSize = scssOrderConfig.get<number>('tabSize') || config.tabSize;
+    config.spaceBetweenClass = scssOrderConfig.get<boolean>('spaceBetweenClass') || config.spaceBetweenClass;
 }
 
 // TODO: benchmarking ?
@@ -49,7 +42,8 @@ async function getPackageJsonConfig(config: Config) {
         const { scssOrderConfig } = fileJson; // scssOrderConfig 추출
 
         if (scssOrderConfig) {
-            const { orderList, changeOnSave, showErrorMessages, autoFormat, formatForm } = scssOrderConfig;
+            const { orderList, changeOnSave, showErrorMessages, autoFormat, tabSize, spaceBetweenClass } =
+                scssOrderConfig;
 
             if (orderList) {
                 config.orderList = orderList;
@@ -63,11 +57,11 @@ async function getPackageJsonConfig(config: Config) {
             if (autoFormat) {
                 config.autoFormat = autoFormat;
             }
-            if (formatForm) {
-                const validFormatForm: FormatForm = {
-                    tabSize: formatForm.tabSize ? formatForm.tabSize : config.formatForm.tabSize,
-                };
-                config.formatForm = validFormatForm;
+            if (tabSize) {
+                config.tabSize = tabSize;
+            }
+            if (spaceBetweenClass) {
+                config.spaceBetweenClass = spaceBetweenClass;
             }
         }
     } catch (error) {
@@ -75,6 +69,7 @@ async function getPackageJsonConfig(config: Config) {
     }
 }
 
+// TODO: check if fo in cindition with boolean conifg
 async function getSassOrderSetting(config: Config, fileName: string) {
     try {
         let fileJson = await getFileJson(fileName);
@@ -91,11 +86,11 @@ async function getSassOrderSetting(config: Config, fileName: string) {
         if (fileJson.autoFormat) {
             config.autoFormat = fileJson.autoFormat;
         }
-        if (fileJson.formatForm) {
-            const validFormatForm: FormatForm = {
-                tabSize: fileJson.formatForm.tabSize ? fileJson.formatForm.tabSize : config.formatForm.tabSize,
-            };
-            config.formatForm = validFormatForm;
+        if (fileJson.tabSize) {
+            config.tabSize = fileJson.tabSize;
+        }
+        if (fileJson.spaceBetweenClass !== undefined) {
+            config.spaceBetweenClass = fileJson.spaceBetweenClass;
         }
     } catch (error) {
         console.error('Error:', error);
@@ -109,9 +104,8 @@ export async function getConfig(): Promise<Config> {
         changeOnSave: true,
         showErrorMessages: false,
         autoFormat: false,
-        formatForm: {
-            tabSize: 4,
-        },
+        tabSize: 4,
+        spaceBetweenClass: true,
     };
 
     // settings.json / .vscode/setting.json

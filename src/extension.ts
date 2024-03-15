@@ -217,24 +217,27 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config, orderListArr
     for (let i = 1; i < splitTable.length; i++) {
         if (splitTable[i - 1].includes('{')) {
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], (tabNum + 1) * config.formatForm.tabSize);
+            newText += addSpacesToBeginning(splitTable[i], (tabNum + 1) * config.tabSize);
             tabNum++;
         } else if (splitTable[i] === '}') {
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], (tabNum - 1) * config.formatForm.tabSize);
+            newText += addSpacesToBeginning(splitTable[i], (tabNum - 1) * config.tabSize);
             tabNum = tabNum - 1;
         } else if (splitTable[i].includes('{')) {
+            if (config.spaceBetweenClass) {
+                newText += '\n';
+            }
             newText += '\n';
-            newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], tabNum * config.formatForm.tabSize);
+            newText += addSpacesToBeginning(splitTable[i], tabNum * config.tabSize);
         } else {
             newText += '\n';
-            newText += addSpacesToBeginning(splitTable[i], tabNum * config.formatForm.tabSize);
+            newText += addSpacesToBeginning(splitTable[i], tabNum * config.tabSize);
         }
     }
     newText += '\n';
     // console.log(newText);
 
+    // TODO: 다른 format editor, trim 하는 거랑 사용히면 format에 조금 문제가 생김
     editor
         .edit((editBuilder) => {
             const document = editor.document;
