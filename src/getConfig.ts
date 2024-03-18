@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-import { Config } from './interface/config';
+import { Config } from 'scss-order';
 
 async function getFileJson(fileName: string) {
     try {
