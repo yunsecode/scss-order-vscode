@@ -6,26 +6,21 @@ import { VsCodeConfig } from './interface/config';
 import { PackageJson, ConfigFile } from './interface/config';
 
 async function getFileJson(fileName: string): Promise<Object | null> {
+    // 파일 검색 비동기 작업 수행
+    const files = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
+
+    if (files.length < 1) {
+        return null;
+    }
+
+    const packageJsonConfigPath = files[0].fsPath;
+
+    // 파일 읽기 비동기 작업 수행
     try {
-        // 파일 검색 비동기 작업 수행
-        const files = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
-
-        if (files.length < 1) {
-            return null;
-        }
-
-        const packageJsonConfigPath = files[0].fsPath;
-
-        // 파일 읽기 비동기 작업 수행
         const data = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
-        try {
-            return JSON.parse(data);
-        } catch {
-            return null;
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        throw(null);
+        return JSON.parse(data);
+    } catch {
+        return null;
     }
 }
 
@@ -42,72 +37,67 @@ function getCodeSetting(config: VsCodeConfig): void {
 
 // TODO: benchmarking ?
 async function getPackageJsonConfig(config: VsCodeConfig): Promise<void> {
-    try {
-        const fileJson: PackageJson | null = await getFileJson('package.json');
+    const fileJson: PackageJson | null = await getFileJson('package.json');
 
-        if (!fileJson) {
-            return;
+    if (!fileJson) {
+        return;
+    }
+
+    const { scssOrderConfig } = fileJson;
+
+    if (scssOrderConfig) {
+        const { orderList, changeOnSave, showErrorMessages, tabSize, spaceBeforeClass, insertFinalNewline } =
+            scssOrderConfig;
+
+        console.warn('list',typeof orderList);
+
+        // check type
+        if (typeof orderList === 'object') {
+            config.orderList = orderList;
         }
-
-        const { scssOrderConfig } = fileJson;
-
-        if (scssOrderConfig) {
-            const { orderList, changeOnSave, showErrorMessages, autoFormat, tabSize, spaceBeforeClass } =
-                scssOrderConfig;
-
-            if (orderList) {
-                config.orderList = orderList;
-            }
-            if (changeOnSave) {
-                config.changeOnSave = changeOnSave;
-            }
-            if (showErrorMessages) {
-                config.showErrorMessages = showErrorMessages;
-            }
-            if (autoFormat) {
-                config.autoFormat = autoFormat;
-            }
-            if (tabSize) {
-                config.tabSize = tabSize;
-            }
-            if (spaceBeforeClass) {
-                config.spaceBeforeClass = spaceBeforeClass;
-            }
+        if (typeof tabSize === 'number') {
+            config.tabSize = tabSize;
         }
-    } catch (error) {
-        console.error('Error:', error); // 에러 처리
+        if (typeof spaceBeforeClass === 'boolean') {
+            config.spaceBeforeClass = spaceBeforeClass;
+        }
+        if (typeof insertFinalNewline === 'boolean') {
+            config.insertFinalNewline = insertFinalNewline;
+        }
+        if (typeof changeOnSave === 'boolean') {
+            config.changeOnSave = changeOnSave;
+        }
+        if (typeof showErrorMessages === 'boolean') {
+            config.showErrorMessages = showErrorMessages;
+        }
     }
 }
 
 // TODO: check if fo in cindition with boolean conifg
 async function getSassOrderSetting(config: VsCodeConfig, fileName: string): Promise<void> {
-    try {
-        const fileJson: ConfigFile | null = await getFileJson(fileName);
+    const fileJson: ConfigFile | null = await getFileJson(fileName);
 
-        if (!fileJson) {
-            return;
-        }
-        // TODO: check type
-        if (fileJson.orderList) {
-            config.orderList = fileJson.orderList;
-        }
-        if (fileJson.changeOnSave) {
-            config.changeOnSave = fileJson.changeOnSave;
-        }
-        if (fileJson.showErrorMessages) {
-            config.showErrorMessages = fileJson.showErrorMessages;
-        }
-        if (fileJson.autoFormat) {
-            config.autoFormat = fileJson.autoFormat;
-        }
-        if (fileJson.tabSize) {
-            config.tabSize = fileJson.tabSize;
-        }
-        if (fileJson.spaceBeforeClass !== undefined) {
-            config.spaceBeforeClass = fileJson.spaceBeforeClass;
-        }
-    } catch (error) {
-        console.error('Error:', error);
+    if (!fileJson) {
+        return;
+    }
+    // TODO: check type
+    if (typeof fileJson.orderList === 'object') {
+        config.orderList = fileJson.orderList;
+    }
+    if (typeof fileJson.tabSize === 'number') {
+        config.tabSize = fileJson.tabSize;
+    }
+    if (typeof fileJson.spaceBeforeClass === 'boolean') {
+        config.spaceBeforeClass = fileJson.spaceBeforeClass;
+    }
+    if (typeof fileJson.insertFinalNewline === 'boolean') {
+        config.insertFinalNewline = fileJson.insertFinalNewline;
+    }
+    if (typeof fileJson.changeOnSave === 'boolean') {
+        config.changeOnSave = fileJson.changeOnSave;
+    }
+    if (typeof fileJson.showErrorMessages === 'boolean') {
+        config.showErrorMessages = fileJson.showErrorMessages;
     }
 }
 
