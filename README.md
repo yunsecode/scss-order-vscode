@@ -1,1 +1,1 @@
-# scss-order
+# scss-order-vscode

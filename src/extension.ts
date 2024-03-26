@@ -2,8 +2,9 @@ import * as vscode from 'vscode';
 
 import { getConfig } from './getConfig';
 import { Config, orderProperties, formatProperties } from 'scss-order';
+import { VsCodeConfig } from './interface/config';
 
-function formatWithOrder(editor: vscode.TextEditor, config: Config) {
+function formatWithOrder(editor: vscode.TextEditor, config: VsCodeConfig) {
     let splitTable = orderProperties(config, editor.document.getText());
 
     let formatted = formatProperties(config, splitTable);
@@ -26,7 +27,7 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config) {
         });
 }
 
-function order(config: Config): Thenable<boolean> {
+function order(config: VsCodeConfig): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         // Check editor
         const editor = vscode.window.activeTextEditor;

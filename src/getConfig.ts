@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-import { Config } from 'scss-order';
+import { VsCodeConfig } from './interface/config';
 
 async function getFileJson(fileName: string) {
     try {
@@ -23,7 +23,7 @@ async function getFileJson(fileName: string) {
     }
 }
 
-function getCodeSetting(config: Config) {
+function getCodeSetting(config: VsCodeConfig) {
     const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
 
     config.changeOnSave = scssOrderConfig.get<boolean>('changeOnSave') || config.changeOnSave;
@@ -35,7 +35,7 @@ function getCodeSetting(config: Config) {
 }
 
 // TODO: benchmarking ?
-async function getPackageJsonConfig(config: Config) {
+async function getPackageJsonConfig(config: VsCodeConfig) {
     try {
         const fileJson = await getFileJson('package.json'); // 파일에서 JSON 데이터를 가져옴
 
@@ -70,7 +70,7 @@ async function getPackageJsonConfig(config: Config) {
 }
 
 // TODO: check if fo in cindition with boolean conifg
-async function getSassOrderSetting(config: Config, fileName: string) {
+async function getSassOrderSetting(config: VsCodeConfig, fileName: string) {
     try {
         let fileJson = await getFileJson(fileName);
 
@@ -97,15 +97,14 @@ async function getSassOrderSetting(config: Config, fileName: string) {
     }
 }
 
-export async function getConfig(): Promise<Config> {
+export async function getConfig(): Promise<VsCodeConfig> {
     // TODO: Get default valur automotically
-    let config: Config = {
+    let config: VsCodeConfig = {
         orderList: [],
-        changeOnSave: true,
-        showErrorMessages: false,
-        autoFormat: false,
         tabSize: 4,
         spaceBeforeClass: true,
+        insertFinalNewline: true,
+        showErrorMessages: false,
     };
 
     // settings.json / .vscode/setting.json
