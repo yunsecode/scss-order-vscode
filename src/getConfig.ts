@@ -3,6 +3,8 @@ import * as fs from 'fs';
 
 import { VsCodeConfig } from './interface/config';
 
+import { PackageJson, ConfigFile } from './interface/config';
+
 async function getFileJson(fileName: string): Promise<Object | null> {
     try {
         // 파일 검색 비동기 작업 수행
@@ -36,28 +38,6 @@ function getCodeSetting(config: VsCodeConfig): void {
     config.autoFormat = scssOrderConfig.get<boolean>('autoFormat') || config.autoFormat;
     config.tabSize = scssOrderConfig.get<number>('tabSize') || config.tabSize;
     config.spaceBeforeClass = scssOrderConfig.get<boolean>('spaceBeforeClass') || config.spaceBeforeClass;
-}
-
-interface PackageJson extends Object {
-    scssOrderConfig?: {
-        orderList: string[];
-        tabSize: number;
-        spaceBeforeClass: boolean;
-        insertFinalNewline: boolean;
-        changeOnSave?: boolean;
-        autoFormat?: boolean;
-        showErrorMessages: boolean;
-    };
-}
-
-interface ConfigFile extends Object {
-    orderList?: string[];
-    tabSize?: number;
-    spaceBeforeClass?: boolean;
-    insertFinalNewline?: boolean;
-    changeOnSave?: boolean;
-    autoFormat?: boolean;
-    showErrorMessages?: boolean;
 }
 
 // TODO: benchmarking ?
