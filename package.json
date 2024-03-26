@@ -32,27 +32,10 @@
                 "scss-order.orderList": {
                     "type": "array",
                     "default": "",
-                    "description": "Order of style elements",
+                    "description": "Order of style elements. See default value in scss-order npm",
                     "items": {
                         "type": "string"
                     }
-                },
-                "scss-order.changeOnSave": {
-                    "type": "boolean",
-                    "default": "true",
-                    "description": "Change on save ?"
-                },
-                "scss-order.showErrorMessages": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Show error messages or not",
-                    "scope": "resource"
-                },
-                "scss-order.autoFormat": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Auto format or not the scss file",
-                    "scope": "resource"
                 },
                 "scss-order.tabSize": {
                     "type": "number",
@@ -64,6 +47,23 @@
                     "type": "boolean",
                     "default": true,
                     "description": "space between class",
+                    "scope": "resource"
+                },
+                "scss-order.insertFinalNewline": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "\n at the end of file",
+                    "scope": "resource"
+                },
+                "scss-order.changeOnSave": {
+                    "type": "boolean",
+                    "default": "true",
+                    "description": "Change on save"
+                },
+                "scss-order.showErrorMessages": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show error messages or not",
                     "scope": "resource"
                 }
             }

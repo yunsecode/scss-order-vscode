@@ -1,6 +1,12 @@
 import { Config } from 'scss-order';
 
+// orderList: string[];         => []
+// tabSize: number;             => 4
+// spaceBeforeClass: boolean;   => true
+// insertFinalNewline: boolean; => true
+
 export interface VsCodeConfig extends Config {
+    changeOnSave: boolean;
     showErrorMessages: boolean;
 }
 
