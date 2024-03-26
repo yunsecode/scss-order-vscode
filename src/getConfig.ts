@@ -3,27 +3,31 @@ import * as fs from 'fs';
 
 import { VsCodeConfig } from './interface/config';
 
-async function getFileJson(fileName: string) {
+async function getFileJson(fileName: string): Promise<Object | null> {
     try {
         // 파일 검색 비동기 작업 수행
         const files = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
 
         if (files.length < 1) {
-            return;
+            return null;
         }
 
         const packageJsonConfigPath = files[0].fsPath;
 
         // 파일 읽기 비동기 작업 수행
         const data = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
-
-        return JSON.parse(data);
+        try {
+            return JSON.parse(data);
+        } catch {
+            return null;
+        }
     } catch (error) {
         console.error('Error:', error);
+        throw(null);
     }
 }
 
-function getCodeSetting(config: VsCodeConfig) {
+function getCodeSetting(config: VsCodeConfig): void {
     const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
 
     config.changeOnSave = scssOrderConfig.get<boolean>('changeOnSave') || config.changeOnSave;
@@ -34,12 +38,38 @@ function getCodeSetting(config: VsCodeConfig) {
     config.spaceBeforeClass = scssOrderConfig.get<boolean>('spaceBeforeClass') || config.spaceBeforeClass;
 }
 
-// TODO: benchmarking ?
-async function getPackageJsonConfig(config: VsCodeConfig) {
-    try {
-        const fileJson = await getFileJson('package.json'); // 파일에서 JSON 데이터를 가져옴
+interface PackageJson extends Object {
+    scssOrderConfig?: {
+        orderList: string[];
+        tabSize: number;
+        spaceBeforeClass: boolean;
+        insertFinalNewline: boolean;
+        changeOnSave?: boolean;
+        autoFormat?: boolean;
+        showErrorMessages: boolean;
+    };
+}
 
-        const { scssOrderConfig } = fileJson; // scssOrderConfig 추출
+interface ConfigFile extends Object {
+    orderList?: string[];
+    tabSize?: number;
+    spaceBeforeClass?: boolean;
+    insertFinalNewline?: boolean;
+    changeOnSave?: boolean;
+    autoFormat?: boolean;
+    showErrorMessages?: boolean;
+}
+
+// TODO: benchmarking ?
+async function getPackageJsonConfig(config: VsCodeConfig): Promise<void> {
+    try {
+        const fileJson: PackageJson | null = await getFileJson('package.json');
+
+        if (!fileJson) {
+            return;
+        }
+
+        const { scssOrderConfig } = fileJson;
 
         if (scssOrderConfig) {
             const { orderList, changeOnSave, showErrorMessages, autoFormat, tabSize, spaceBeforeClass } =
@@ -70,10 +100,14 @@ async function getPackageJsonConfig(config: VsCodeConfig) {
 }
 
 // TODO: check if fo in cindition with boolean conifg
-async function getSassOrderSetting(config: VsCodeConfig, fileName: string) {
+async function getSassOrderSetting(config: VsCodeConfig, fileName: string): Promise<void> {
     try {
-        let fileJson = await getFileJson(fileName);
+        const fileJson: ConfigFile | null = await getFileJson(fileName);
 
+        if (!fileJson) {
+            return;
+        }
+        // TODO: check type
         if (fileJson.orderList) {
             config.orderList = fileJson.orderList;
         }

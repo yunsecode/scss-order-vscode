@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 
 import { getConfig } from './getConfig';
-import { Config, orderProperties, formatProperties } from 'scss-order';
+import { orderProperties, formatProperties } from 'scss-order';
 import { VsCodeConfig } from './interface/config';
 
-function formatWithOrder(editor: vscode.TextEditor, config: VsCodeConfig) {
+function formatWithOrder(editor: vscode.TextEditor, config: VsCodeConfig): void {
     let splitTable = orderProperties(config, editor.document.getText());
 
     let formatted = formatProperties(config, splitTable);
@@ -42,18 +42,7 @@ function order(config: VsCodeConfig): Thenable<boolean> {
 
 // ---------------------------------------- Activate ----------------------------------------
 // TODO: reset cursor place
-// On Cmd + s
-
-function waitForOneSecond() {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            // 1초 후에 resolve를 호출하여 Promise를 완료합니다.
-            resolve(true);
-        }, 1000); // 1초는 1000밀리초 입니다.
-    });
-}
-
-function onSave() {
+function onSave(): vscode.Disposable {
     return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
         event.waitUntil(
             (async () => {
@@ -79,7 +68,7 @@ function onSave() {
 }
 
 // With Command + Shift + P
-function onCommand() {
+function onCommand(): vscode.Disposable {
     return vscode.commands.registerCommand('scss-order.order', async function () {
         const config = await getConfig();
 
@@ -88,7 +77,7 @@ function onCommand() {
 }
 
 // TODO: 내 로컬에 있는 package.json에 있는 값들을 interface 파일에 넣고, 그 interface를 채우는 식으로
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
     // const startTimestamp = Date.now();
     // // ---------------------------------------
     // // ---------------------------------------
@@ -104,4 +93,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // ---------------------------------------- deactivate ----------------------------------------
-export function deactivate() {}
+export function deactivate(): void {}
