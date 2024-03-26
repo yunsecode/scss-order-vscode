@@ -5,15 +5,15 @@ import { orderProperties, formatProperties } from 'scss-order';
 import { VsCodeConfig } from './interface/config';
 
 function formatWithOrder(editor: vscode.TextEditor, config: VsCodeConfig): void {
-    let splitTable = orderProperties(config, editor.document.getText());
+    let splitTable: string[] = orderProperties(config, editor.document.getText());
 
-    let formatted = formatProperties(config, splitTable);
+    let formatted: string = formatProperties(config, splitTable);
 
     // TODO: 다른 format editor, trim 하는 거랑 사용히면 format에 조금 문제가 생김
     editor
         .edit((editBuilder) => {
-            const document = editor.document;
-            const fullRange = new vscode.Range(
+            const document: vscode.TextDocument = editor.document;
+            const fullRange: vscode.Range = new vscode.Range(
                 document.positionAt(0),
                 document.positionAt(editor.document.getText().length),
             );
@@ -29,8 +29,8 @@ function formatWithOrder(editor: vscode.TextEditor, config: VsCodeConfig): void 
 
 function order(config: VsCodeConfig): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-        // Check editor
-        const editor = vscode.window.activeTextEditor;
+        const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+
         if (!editor) {
             return reject('No active text editor');
         }
@@ -55,7 +55,7 @@ function onSave(): vscode.Disposable {
                         // TODO: if not valid err Msg?
                         return;
                     }
-                    const conf = await getConfig();
+                    const conf: VsCodeConfig = await getConfig();
                     if (conf.changeOnSave) {
                         order(conf);
                     }
@@ -70,7 +70,7 @@ function onSave(): vscode.Disposable {
 // With Command + Shift + P
 function onCommand(): vscode.Disposable {
     return vscode.commands.registerCommand('scss-order.order', async function () {
-        const config = await getConfig();
+        const config: VsCodeConfig = await getConfig();
 
         order(config);
     });
@@ -78,13 +78,6 @@ function onCommand(): vscode.Disposable {
 
 // TODO: 내 로컬에 있는 package.json에 있는 값들을 interface 파일에 넣고, 그 interface를 채우는 식으로
 export function activate(context: vscode.ExtensionContext): void {
-    // const startTimestamp = Date.now();
-    // // ---------------------------------------
-    // // ---------------------------------------
-    // const endTimestamp = Date.now();
-    // const elapsedTime = endTimestamp - startTimestamp;
-    // console.log(`실행 시간: ${elapsedTime}밀리초`);
-
     // Cmd + s
     context.subscriptions.push(onSave());
 

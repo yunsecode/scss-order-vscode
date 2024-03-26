@@ -7,17 +7,17 @@ import { PackageJson, ConfigFile } from './interface/config';
 
 async function getFileJson(fileName: string): Promise<Object | null> {
     // 파일 검색 비동기 작업 수행
-    const files = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
+    const files: vscode.Uri[] = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
 
     if (files.length < 1) {
         return null;
     }
 
-    const packageJsonConfigPath = files[0].fsPath;
+    const packageJsonConfigPath: string = files[0].fsPath;
 
     // 파일 읽기 비동기 작업 수행
     try {
-        const data = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
+        const data: string = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
         return JSON.parse(data);
     } catch {
         return null;
@@ -25,7 +25,7 @@ async function getFileJson(fileName: string): Promise<Object | null> {
 }
 
 function getCodeSetting(config: VsCodeConfig): void {
-    const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
+    const scssOrderConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('scss-order');
 
     config.changeOnSave = scssOrderConfig.get<boolean>('changeOnSave') || config.changeOnSave;
     config.orderList = scssOrderConfig.get<string[]>('orderList') || config.orderList;
@@ -49,9 +49,6 @@ async function getPackageJsonConfig(config: VsCodeConfig): Promise<void> {
         const { orderList, changeOnSave, showErrorMessages, tabSize, spaceBeforeClass, insertFinalNewline } =
             scssOrderConfig;
 
-        console.warn('list',typeof orderList);
-
-        // check type
         if (typeof orderList === 'object') {
             config.orderList = orderList;
         }
@@ -80,7 +77,6 @@ async function getSassOrderSetting(config: VsCodeConfig, fileName: string): Prom
     if (!fileJson) {
         return;
     }
-    // TODO: check type
     if (typeof fileJson.orderList === 'object') {
         config.orderList = fileJson.orderList;
     }
@@ -108,6 +104,7 @@ export async function getConfig(): Promise<VsCodeConfig> {
         tabSize: 4,
         spaceBeforeClass: true,
         insertFinalNewline: true,
+        changeOnSave: true,
         showErrorMessages: false,
     };
 
