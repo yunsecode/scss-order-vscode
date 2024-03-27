@@ -1,18 +1,19 @@
 import * as vscode from 'vscode';
 
 import { getConfig } from './getConfig';
-import { Config, orderProperties, formatProperties } from 'scss-order';
+import { orderProperties, formatProperties } from 'scss-order';
+import { VsCodeConfig } from './interface/config';
 
-function formatWithOrder(editor: vscode.TextEditor, config: Config) {
-    let splitTable = orderProperties(config, editor.document.getText());
+function formatWithOrder(editor: vscode.TextEditor, config: VsCodeConfig): void {
+    let splitTable: string[] = orderProperties(config, editor.document.getText());
 
-    let formatted = formatProperties(config, splitTable);
+    let formatted: string = formatProperties(config, splitTable);
 
     // TODO: 다른 format editor, trim 하는 거랑 사용히면 format에 조금 문제가 생김
     editor
         .edit((editBuilder) => {
-            const document = editor.document;
-            const fullRange = new vscode.Range(
+            const document: vscode.TextDocument = editor.document;
+            const fullRange: vscode.Range = new vscode.Range(
                 document.positionAt(0),
                 document.positionAt(editor.document.getText().length),
             );
@@ -26,10 +27,10 @@ function formatWithOrder(editor: vscode.TextEditor, config: Config) {
         });
 }
 
-function order(config: Config): Thenable<boolean> {
+function order(config: VsCodeConfig): Thenable<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-        // Check editor
-        const editor = vscode.window.activeTextEditor;
+        const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+
         if (!editor) {
             return reject('No active text editor');
         }
@@ -41,18 +42,7 @@ function order(config: Config): Thenable<boolean> {
 
 // ---------------------------------------- Activate ----------------------------------------
 // TODO: reset cursor place
-// On Cmd + s
-
-function waitForOneSecond() {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            // 1초 후에 resolve를 호출하여 Promise를 완료합니다.
-            resolve(true);
-        }, 1000); // 1초는 1000밀리초 입니다.
-    });
-}
-
-function onSave() {
+function onSave(): vscode.Disposable {
     return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
         event.waitUntil(
             (async () => {
@@ -65,7 +55,7 @@ function onSave() {
                         // TODO: if not valid err Msg?
                         return;
                     }
-                    const conf = await getConfig();
+                    const conf: VsCodeConfig = await getConfig();
                     if (conf.changeOnSave) {
                         order(conf);
                     }
@@ -78,23 +68,16 @@ function onSave() {
 }
 
 // With Command + Shift + P
-function onCommand() {
+function onCommand(): vscode.Disposable {
     return vscode.commands.registerCommand('scss-order.order', async function () {
-        const config = await getConfig();
+        const config: VsCodeConfig = await getConfig();
 
         order(config);
     });
 }
 
 // TODO: 내 로컬에 있는 package.json에 있는 값들을 interface 파일에 넣고, 그 interface를 채우는 식으로
-export function activate(context: vscode.ExtensionContext) {
-    // const startTimestamp = Date.now();
-    // // ---------------------------------------
-    // // ---------------------------------------
-    // const endTimestamp = Date.now();
-    // const elapsedTime = endTimestamp - startTimestamp;
-    // console.log(`실행 시간: ${elapsedTime}밀리초`);
-
+export function activate(context: vscode.ExtensionContext): void {
     // Cmd + s
     context.subscriptions.push(onSave());
 
@@ -103,4 +86,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // ---------------------------------------- deactivate ----------------------------------------
-export function deactivate() {}
+export function deactivate(): void {}

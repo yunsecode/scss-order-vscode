@@ -1,30 +1,31 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-import { Config } from 'scss-order';
+import { VsCodeConfig } from './interface/config';
 
-async function getFileJson(fileName: string) {
+import { PackageJson, ConfigFile } from './interface/config';
+
+async function getFileJson(fileName: string): Promise<Object | null> {
+    // 파일 검색 비동기 작업 수행
+    const files: vscode.Uri[] = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
+
+    if (files.length < 1) {
+        return null;
+    }
+
+    const packageJsonConfigPath: string = files[0].fsPath;
+
+    // 파일 읽기 비동기 작업 수행
     try {
-        // 파일 검색 비동기 작업 수행
-        const files = await vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules/**', 1);
-
-        if (files.length < 1) {
-            return;
-        }
-
-        const packageJsonConfigPath = files[0].fsPath;
-
-        // 파일 읽기 비동기 작업 수행
-        const data = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
-
+        const data: string = await fs.promises.readFile(packageJsonConfigPath, 'utf8');
         return JSON.parse(data);
-    } catch (error) {
-        console.error('Error:', error);
+    } catch {
+        return null;
     }
 }
 
-function getCodeSetting(config: Config) {
-    const scssOrderConfig = vscode.workspace.getConfiguration('scss-order');
+function getCodeSetting(config: VsCodeConfig): void {
+    const scssOrderConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('scss-order');
 
     config.changeOnSave = scssOrderConfig.get<boolean>('changeOnSave') || config.changeOnSave;
     config.orderList = scssOrderConfig.get<string[]>('orderList') || config.orderList;
@@ -35,77 +36,76 @@ function getCodeSetting(config: Config) {
 }
 
 // TODO: benchmarking ?
-async function getPackageJsonConfig(config: Config) {
-    try {
-        const fileJson = await getFileJson('package.json'); // 파일에서 JSON 데이터를 가져옴
+async function getPackageJsonConfig(config: VsCodeConfig): Promise<void> {
+    const fileJson: PackageJson | null = await getFileJson('package.json');
 
-        const { scssOrderConfig } = fileJson; // scssOrderConfig 추출
+    if (!fileJson) {
+        return;
+    }
 
-        if (scssOrderConfig) {
-            const { orderList, changeOnSave, showErrorMessages, autoFormat, tabSize, spaceBeforeClass } =
-                scssOrderConfig;
+    const { scssOrderConfig } = fileJson;
 
-            if (orderList) {
-                config.orderList = orderList;
-            }
-            if (changeOnSave) {
-                config.changeOnSave = changeOnSave;
-            }
-            if (showErrorMessages) {
-                config.showErrorMessages = showErrorMessages;
-            }
-            if (autoFormat) {
-                config.autoFormat = autoFormat;
-            }
-            if (tabSize) {
-                config.tabSize = tabSize;
-            }
-            if (spaceBeforeClass) {
-                config.spaceBeforeClass = spaceBeforeClass;
-            }
+    if (scssOrderConfig) {
+        const { orderList, changeOnSave, showErrorMessages, tabSize, spaceBeforeClass, insertFinalNewline } =
+            scssOrderConfig;
+
+        if (typeof orderList === 'object') {
+            config.orderList = orderList;
         }
-    } catch (error) {
-        console.error('Error:', error); // 에러 처리
+        if (typeof tabSize === 'number') {
+            config.tabSize = tabSize;
+        }
+        if (typeof spaceBeforeClass === 'boolean') {
+            config.spaceBeforeClass = spaceBeforeClass;
+        }
+        if (typeof insertFinalNewline === 'boolean') {
+            config.insertFinalNewline = insertFinalNewline;
+        }
+        if (typeof changeOnSave === 'boolean') {
+            config.changeOnSave = changeOnSave;
+        }
+        if (typeof showErrorMessages === 'boolean') {
+            config.showErrorMessages = showErrorMessages;
+        }
     }
 }
 
 // TODO: check if fo in cindition with boolean conifg
-async function getSassOrderSetting(config: Config, fileName: string) {
-    try {
-        let fileJson = await getFileJson(fileName);
+async function getSassOrderSetting(config: VsCodeConfig, fileName: string): Promise<void> {
+    const fileJson: ConfigFile | null = await getFileJson(fileName);
 
-        if (fileJson.orderList) {
-            config.orderList = fileJson.orderList;
-        }
-        if (fileJson.changeOnSave) {
-            config.changeOnSave = fileJson.changeOnSave;
-        }
-        if (fileJson.showErrorMessages) {
-            config.showErrorMessages = fileJson.showErrorMessages;
-        }
-        if (fileJson.autoFormat) {
-            config.autoFormat = fileJson.autoFormat;
-        }
-        if (fileJson.tabSize) {
-            config.tabSize = fileJson.tabSize;
-        }
-        if (fileJson.spaceBeforeClass !== undefined) {
-            config.spaceBeforeClass = fileJson.spaceBeforeClass;
-        }
-    } catch (error) {
-        console.error('Error:', error);
+    if (!fileJson) {
+        return;
+    }
+    if (typeof fileJson.orderList === 'object') {
+        config.orderList = fileJson.orderList;
+    }
+    if (typeof fileJson.tabSize === 'number') {
+        config.tabSize = fileJson.tabSize;
+    }
+    if (typeof fileJson.spaceBeforeClass === 'boolean') {
+        config.spaceBeforeClass = fileJson.spaceBeforeClass;
+    }
+    if (typeof fileJson.insertFinalNewline === 'boolean') {
+        config.insertFinalNewline = fileJson.insertFinalNewline;
+    }
+    if (typeof fileJson.changeOnSave === 'boolean') {
+        config.changeOnSave = fileJson.changeOnSave;
+    }
+    if (typeof fileJson.showErrorMessages === 'boolean') {
+        config.showErrorMessages = fileJson.showErrorMessages;
     }
 }
 
-export async function getConfig(): Promise<Config> {
+export async function getConfig(): Promise<VsCodeConfig> {
     // TODO: Get default valur automotically
-    let config: Config = {
+    let config: VsCodeConfig = {
         orderList: [],
-        changeOnSave: true,
-        showErrorMessages: false,
-        autoFormat: false,
         tabSize: 4,
         spaceBeforeClass: true,
+        insertFinalNewline: true,
+        changeOnSave: true,
+        showErrorMessages: false,
     };
 
     // settings.json / .vscode/setting.json
